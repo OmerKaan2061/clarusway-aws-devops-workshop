@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  This app converts decimal numbers to roman number.
+Parameters:
+  KeyPairName : 
+    Description: Enter your key pair name please
+    Type : AWS::EC2::KeyPair::KeyName
+  
+Resources:
+  WebServerSecurityGroup : 
+    Type : AWS::EC2::SecurityGroup
+    Properties:
+        GroupDescription: Enables http for flesk
+        SecurityGroupIngress : 
+          - IpProtocol: TCP
+            FromPort: 80
+            ToPort : 80
+            CIDRIp : 0.0.0.0/0
+          - IpProtocol: TCP
+            FromPort: 22
+            ToPort : 22
+            CIDRIp : 0.0.0.0/0
+  
+  MyInstance : 
+    Type: AWS::EC2::Instance
+    Properties :
+      ImageId: ami-0947d2ba12ee1ff75
+      InstanceType : t2.micro
+      KeyName : !Ref KeyPairName
+      SecurityGroupIds:
+          - !Ref WebServerSecurityGroup
+      Tags:
+          - Key: Name
+              Value: Roman_Convert
+      UserData :
+        Fn::!Base64 : 
+          !Sub | 
+            #! bin/bash
+            sudo yum update -y
+            yum install python3 -y
+            pip3 install flask
+            wget -P templates https://raw.githubusercontent.com/OmerKaan2061/clarusway-aws-devops-workshop/master/aws/projects/001-roman-numerals-converter/templates/result.html
+            wget -P templates https://raw.githubusercontent.com/OmerKaan2061/clarusway-aws-devops-workshop/master/aws/projects/001-roman-numerals-converter/templates/index.html
+            wget https://raw.githubusercontent.com/OmerKaan2061/clarusway-aws-devops-workshop/master/aws/projects/001-roman-numerals-converter/app2.py
+            python3 app2.py
+
+  
+Outputs:
+  MyURL : 
+    Value : !Sub 
+      - http://${public_address}:80
+      - public_address : !GetAtt MyInstance.PublicDnsName
